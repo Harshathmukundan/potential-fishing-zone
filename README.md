@@ -155,4 +155,6 @@ Simply open `frontend/index.html` in any modern web browser (Chrome/Safari/Firef
 
 ## 📝 License
 
+This project is licensed under the [MIT License](LICENSE).
+
 Academic project — SRMIST Department of Computing Technologies.
