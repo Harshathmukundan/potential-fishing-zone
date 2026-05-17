@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PFZ Navigator — AI Fishing Zone System</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap"
+    rel="stylesheet" />
+
+  <!-- Leaflet Map -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+     SIDEBAR NAV
+════════════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🎣</div>
+      <div class="logo-text">
+        <span class="logo-title">PFZ</span>
+        <span class="logo-sub">NAVIGATOR</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-panel="dashboard">
+        <span class="nav-icon">◈</span><span class="nav-label">Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="predict">
+        <span class="nav-icon">⬡</span><span class="nav-label">Predict</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="forecast">
+        <span class="nav-icon">◷</span><span class="nav-label">Forecast</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="location">
+        <span class="nav-icon">📍</span><span class="nav-label">Location Forecast</span>
+      </a>
+
+      <a href="#" class="nav-item" data-panel="analytics">
+        <span class="nav-icon">▦</span><span class="nav-label">Analytics</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="research">
+        <span class="nav-icon">🔬</span><span class="nav-label">Research</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="upload">
+        <span class="nav-icon">⊕</span><span class="nav-label">Upload Data</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════ -->
+  <main class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        <span class="page-sub">Tamil Nadu Coast · Bay of Bengal</span>
+      </div>
+      <div class="topbar-right">
+        <div class="pill" id="unetPill">U-Net —</div>
+        <div class="pill" id="lstmPill">ConvLSTM —</div>
+        <div class="pill coord-pill">5°N–14.5°N · 77°E–84.9°E</div>
+      </div>
+    </header>
+
+    <!-- ── DASHBOARD PANEL ── -->
+    <section class="panel active" id="panel-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card accent-orange">
+          <div class="stat-icon">🌡</div>
+          <div class="stat-body">
+            <div class="stat-val" id="statDays">—</div>
+            <div class="stat-label">Total Days</div>
+          </div>
+        </div>
+        <div class="stat-card accent-teal">
+          <div class="stat-icon">⬡</div>
+          <div class="stat-body">
+            <div class="stat-val" id="statUnet">—</div>
+            <div class="stat-label">U-Net Accuracy</div>
+          </div>
+        </div>
+        <div class="stat-card accent-red">
+          <div class="stat-icon">◷</div>
+          <div class="stat-body">
+            <div class="stat-val" id="statLstm">—</div>
+            <div class="stat-label">ConvLSTM Accuracy</div>
+          </div>
+        </div>
+        <div class="stat-card accent-blue">
+          <div class="stat-icon">📍</div>
+          <div class="stat-body">
+            <div class="stat-val" id="statZones">6</div>
+            <div class="stat-label">Parameters Used</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card span-2">
+          <div class="card-header">
+            <span class="card-title">Training Accuracy</span>
+            <div class="card-controls">
+              <button class="ctrl-btn active" data-chart="accuracy">Accuracy</button>
+              <button class="ctrl-btn" data-chart="loss">Loss</button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chartHistory"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">PFZ Distribution</span>
+          </div>
+          <div class="chart-wrap chart-sm">
+            <canvas id="chartDist"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">System Status</span>
+          </div>
+          <div class="info-list" id="systemInfo">
+            <div class="info-row"><span>Backend</span><span class="badge badge-green">Online</span></div>
+            <div class="info-row"><span>Data</span><span class="badge" id="dataStatus">Loading</span></div>
+            <div class="info-row"><span>U-Net</span><span class="badge" id="unetStatus">—</span></div>
+            <div class="info-row"><span>ConvLSTM</span><span class="badge" id="lstmStatus">—</span></div>
+            <div class="info-row"><span>SDG Alignment</span><span class="badge badge-teal">SDG-14</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PREDICT PANEL ── -->
+    <section class="panel" id="panel-predict">
+      <div class="predict-layout">
+        <div class="predict-controls card">
+          <div class="card-header"><span class="card-title">Run Prediction</span></div>
+
+          <div class="form-group">
+            <label class="form-label">Time Index</label>
+            <div class="slider-wrap">
+              <input type="range" id="timeSlider" min="1" max="2765" value="100" class="slider" />
+              <span class="slider-val" id="sliderVal">100</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Min Confidence Threshold</label>
+            <div class="slider-wrap">
+              <input type="range" id="confSlider" min="0" max="100" value="60" class="slider" />
+              <span class="slider-val" id="confVal">60%</span>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="runPredictBtn">
+            <span class="btn-icon">⬡</span> Run U-Net Prediction
+          </button>
+
+          <div class="result-stats" id="predictStats" style="display:none">
+            <div class="result-row">
+              <div class="result-item low">
+                <div class="result-num" id="lowCount">—</div>
+                <div class="result-lbl">Low PFZ</div>
+              </div>
+              <div class="result-item mid">
+                <div class="result-num" id="midCount">—</div>
+                <div class="result-lbl">Medium</div>
+              </div>
+              <div class="result-item high">
+                <div class="result-num" id="highCount">—</div>
+                <div class="result-lbl">High PFZ</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-secondary" id="exportGpsBtn" style="display:none">
+            ⬇ Export GPS Excel
+          </button>
+        </div>
+
+        <div class="card predict-map-card">
+          <div class="card-header">
+            <span class="card-title">PFZ Prediction Map</span>
+            <span class="card-badge" id="modelUsedBadge">—</span>
+          </div>
+          <div class="predict-map-wrap" id="predictMapWrap">
+            <div class="map-placeholder">
+              <div class="placeholder-icon">⬡</div>
+              <div class="placeholder-text">Run prediction to see map</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GPS Table -->
+      <div class="card" id="gpsCard" style="display:none">
+        <div class="card-header">
+          <span class="card-title">Top 20 High PFZ Coordinates</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="gpsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Latitude (°N)</th>
+                <th>Longitude (°E)</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="gpsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FORECAST PANEL ── -->
+    <section class="panel" id="panel-forecast">
+      <div class="predict-layout">
+        <!-- Left Column: Day Selector + Stats -->
+        <div class="predict-left">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Select Forecast Day</span></div>
+            <div class="forecast-day-grid" id="forecastDayGrid">
+              <!-- JS will populate 7 buttons -->
+            </div>
+          </div>
+
+          <div class="card" id="forecastStats" style="display:none">
+            <div class="card-header"><span class="card-title">PFZ Distribution</span></div>
+            <div class="stat-row">
+              <div class="stat-item"><span class="stat-label">🔵 Low PFZ</span><span class="stat-value"
+                  id="fcLowCount">—</span></div>
+              <div class="stat-item"><span class="stat-label">🟡 Medium PFZ</span><span class="stat-value"
+                  id="fcMidCount">—</span></div>
+              <div class="stat-item"><span class="stat-label">🔴 High PFZ</span><span class="stat-value"
+                  id="fcHighCount">—</span></div>
+            </div>
+            <div class="info-row" style="margin-top:12px"><span>Model</span><span class="badge badge-green"
+                id="fcModelBadge">ConvLSTM</span></div>
+          </div>
+
+          <button class="btn-secondary" id="exportForecastGpsBtn" style="display:none">
+            <span class="btn-icon">📥</span> Download GPS as Excel
+          </button>
+        </div>
+
+        <!-- Right Column: Map + GPS Table -->
+        <div class="predict-right">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Forecast Map</span></div>
+            <div class="predict-map-wrap" id="forecastMapWrap">
+              <div class="map-placeholder">
+                <div class="placeholder-icon">◷</div>
+                <div class="placeholder-text">Select a day to see forecast</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="fcGpsCard" style="display:none">
+            <div class="card-header"><span class="card-title">Top GPS Coordinates — High PFZ</span></div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody id="fcGpsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── LOCATION FORECAST PANEL ── -->
+    <section class="panel" id="panel-location">
+      <div class="predict-layout">
+        <div class="predict-controls card">
+          <div class="card-header"><span class="card-title">Location Settings</span></div>
+          
+          <div class="form-group">
+            <label class="form-label">Select Predefined Location</label>
+            <select id="locSelect" class="ctrl-select" style="width: 100%; padding: 8px;">
+              <option value="">-- Custom Coordinates --</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Latitude (°N)</label>
+            <input type="number" id="locLat" class="ctrl-select" style="width: 100%; padding: 8px;" placeholder="e.g. 13.0827" value="13.0827" step="0.0001" min="5" max="14.5" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Longitude (°E)</label>
+            <input type="number" id="locLon" class="ctrl-select" style="width: 100%; padding: 8px;" placeholder="e.g. 80.2707" value="80.2707" step="0.0001" min="77" max="84.92" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Min Confidence</label>
+            <div class="slider-wrap">
+              <input type="range" id="locConfSlider" min="0" max="100" value="60" class="slider" />
+              <span class="slider-val" id="locConfVal">60%</span>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="runLocForecastBtn">
+            <span class="btn-icon">📍</span> Forecast At Location
+          </button>
+
+          <button class="btn-primary" id="runLocRankingBtn" style="background: var(--teal); margin-top: 10px;">
+            <span class="btn-icon">🎯</span> Find Nearby PFZ 
+          </button>
+
+          <button class="btn-secondary" id="exportLocGpsBtn" style="display:none; margin-top: 10px;">
+            <span class="btn-icon">📥</span> Download CSV
+          </button>
+        </div>
+
+        <div class="predict-right" style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Task 1 Output -->
+          <div class="card" id="locForecastCard" style="display: none;">
+            <div class="card-header"><span class="card-title">7-Day Forecast for Location</span></div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Day</th>
+                    <th>Date</th>
+                    <th>PFZ Class</th>
+                    <th>Confidence</th>
+                    <th>Is Land?</th>
+                  </tr>
+                </thead>
+                <tbody id="locForecastBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Task 2 & 4 Output -->
+          <div class="card" id="locRankingCard" style="display: none;">
+            <div class="card-header"><span class="card-title">Most Probable Nearby PFZ Zones (7 Days)</span></div>
+            <div id="locRankingContainer" style="display: flex; flex-direction: column; gap: 15px;">
+              <!-- Container for day-wise ranking tables -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- ── ANALYTICS PANEL ── -->
+    <section class="panel" id="panel-analytics">
+      <div class="analytics-grid">
+
+        <!-- Training History Charts -->
+        <div class="card span-2">
+          <div class="card-header"><span class="card-title">U-Net Training History</span></div>
+          <div class="chart-wrap"><canvas id="chartUnetFull"></canvas></div>
+        </div>
+        <div class="card span-2">
+          <div class="card-header"><span class="card-title">ConvLSTM Training History</span></div>
+          <div class="chart-wrap"><canvas id="chartLstmFull"></canvas></div>
+        </div>
+
+        <!-- Per-Fold CV Accuracy -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">U-Net — Per-Fold Accuracy</span></div>
+          <div class="chart-wrap chart-sm"><canvas id="chartUnetFolds"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">ConvLSTM — Per-Fold Accuracy</span></div>
+          <div class="chart-wrap chart-sm"><canvas id="chartLstmFolds"></canvas></div>
+        </div>
+
+        <!-- Model Comparison -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Model Comparison</span></div>
+          <div class="chart-wrap chart-sm"><canvas id="chartModelRadar"></canvas></div>
+        </div>
+
+        <!-- Confusion Matrices -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">U-Net Confusion Matrix (Avg)</span></div>
+          <div class="table-wrap">
+            <table class="data-table cm-table" id="unetCMTable">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Pred Low</th>
+                  <th>Pred Med</th>
+                  <th>Pred High</th>
+                </tr>
+              </thead>
+              <tbody id="unetCMBody">
+                <tr>
+                  <td><strong>Low</strong></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td><strong>Medium</strong></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td><strong>High</strong></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">ConvLSTM Confusion Matrix (Avg)</span></div>
+          <div class="table-wrap">
+            <table class="data-table cm-table" id="lstmCMTable">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Pred Low</th>
+                  <th>Pred Med</th>
+                  <th>Pred High</th>
+                </tr>
+              </thead>
+              <tbody id="lstmCMBody">
+                <tr>
+                  <td><strong>Low</strong></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td><strong>Medium</strong></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td><strong>High</strong></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── RESEARCH PANEL ── -->
+    <section class="panel" id="panel-research">
+
+      <div class="research-layout">
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Cross-Validation Methodology</span></div>
+          <div class="methodology-text">
+            <p><strong>U-Net:</strong> Temporal Block Split (3-fold). Prevents data leakage by grouping consecutive days
+              into discrete folds.</p>
+            <p style="margin-top: 8px;"><strong>ConvLSTM:</strong> Walk-Forward Split (3-fold). Simulates real-world
+              operational forecasting where past sequences predict future states.</p>
+          </div>
+        </div>
+
+        <div class="model-comparison-grid">
+
+          <!-- UNET Card -->
+          <div class="card model-card">
+            <div class="model-card-header">
+              <span class="model-title unet-title">U-Net (Spatial)</span>
+              <span class="badge badge-orange">Temporal Block</span>
+            </div>
+
+            <div class="metrics-summary-grid">
+              <div class="metric-box">
+                <div class="metric-box-val" id="rsUnetAcc">—</div>
+                <div class="metric-box-label">Accuracy</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-box-val" id="rsUnetF1">—</div>
+                <div class="metric-box-label">F1-Score</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-box-val" id="rsUnetKappa">—</div>
+                <div class="metric-box-label">Cohen's Kappa</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-box-val" id="rsUnetMiou">—</div>
+                <div class="metric-box-label">mIoU</div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="per-class-table" id="unetClassTable">
+                <thead>
+                  <tr>
+                    <th>Class</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1-Score</th>
+                    <th>IoU</th>
+                  </tr>
+                </thead>
+                <tbody id="unetClassBody"></tbody>
+              </table>
+            </div>
+
+            <div class="cv-plot-container">
+              <img src="" id="unetPlotImg" class="cv-plot-img" alt="U-Net CV Results" />
+            </div>
+          </div>
+
+          <!-- ConvLSTM Card -->
+          <div class="card model-card">
+            <div class="model-card-header">
+              <span class="model-title lstm-title">ConvLSTM (Spatio-Temporal)</span>
+              <span class="badge badge-teal">Walk-Forward</span>
+            </div>
+
+            <div class="metrics-summary-grid">
+              <div class="metric-box">
+                <div class="metric-box-val" id="rsLstmAcc">—</div>
+                <div class="metric-box-label">Accuracy</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-box-val" id="rsLstmF1">—</div>
+                <div class="metric-box-label">F1-Score</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-box-val" id="rsLstmKappa">—</div>
+                <div class="metric-box-label">Cohen's Kappa</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-box-val" id="rsLstmMiou">—</div>
+                <div class="metric-box-label">mIoU</div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="per-class-table" id="lstmClassTable">
+                <thead>
+                  <tr>
+                    <th>Class</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1-Score</th>
+                    <th>IoU</th>
+                  </tr>
+                </thead>
+                <tbody id="lstmClassBody"></tbody>
+              </table>
+            </div>
+
+            <div class="cv-plot-container">
+              <img src="" id="lstmPlotImg" class="cv-plot-img" alt="ConvLSTM CV Results" />
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── UPLOAD PANEL ── -->
+    <section class="panel" id="panel-upload">
+      <div class="card upload-card">
+        <div class="card-header"><span class="card-title">Upload CMEMS NetCDF Datasets</span></div>
+
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">⊕</div>
+          <div class="upload-text">Drop .nc files here or click to browse</div>
+          <div class="upload-sub">5 files required: SST · SSH · U-current · V-current · Chlorophyll</div>
+          <input type="file" id="fileInput" multiple accept=".nc" style="display:none" />
+        </div>
+
+        <div class="file-list" id="fileList"></div>
+
+        <button class="btn-primary" id="uploadBtn" style="display:none">
+          ⊕ Upload Files
+        </button>
+
+        <div class="upload-guide">
+          <div class="guide-title">Expected File Patterns</div>
+          <div class="guide-table">
+            <div class="guide-row"><span class="mono">*8369287*</span><span>Sea Surface Temperature (SST)</span></div>
+            <div class="guide-row"><span class="mono">*8416191*</span><span>Northward Current (VO)</span></div>
+            <div class="guide-row"><span class="mono">*8480927*</span><span>Sea Surface Height (SSH)</span></div>
+            <div class="guide-row"><span class="mono">*8817739*</span><span>Eastward Current (UO)</span></div>
+            <div class="guide-row"><span class="mono">*obs-oc*</span><span>Chlorophyll-a (CHL)</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Processing...</div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="src/api.js"></script>
+  <script src="src/charts.js"></script>
+  <!-- map.js removed — Live Map panel removed -->
+  <script src="src/app.js"></script>
+</body>
+
+</html>

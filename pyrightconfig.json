@@ -1,0 +1,9 @@
+{
+    "venvPath": "/Users/harshath/Downloads/pfz_project",
+    "venv": "venv",
+    "extraPaths": [
+        "/Users/harshath/Downloads/pfz_project/backend",
+        "/Users/harshath/Downloads/pfz_project/model",
+        "/Users/harshath/Downloads/pfz_project/venv/lib/python3.12/site-packages"
+    ]
+}

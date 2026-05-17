@@ -1,0 +1,22 @@
+/Users/harshath/Downloads/pfz_project/venv/lib/python3.12/site-packages/keras/src/saving/saving_lib.py:797: UserWarning: Skipping variable loading for optimizer 'adam', because it has 166 variables whereas the saved optimizer has 170 variables. 
+  saveable.load_own_variables(weights_store.get(inner_path))
+/Users/harshath/Downloads/pfz_project/venv/lib/python3.12/site-packages/keras/src/saving/saving_lib.py:797: UserWarning: Skipping variable loading for optimizer 'adam', because it has 42 variables whereas the saved optimizer has 46 variables. 
+  saveable.load_own_variables(weights_store.get(inner_path))
+
+🎣 PFZ Backend API Server
+   Data directory : /Users/harshath/Downloads/main_pfz_prj/backend/uploads/DATA
+   Port           : 5001
+   Upload dir     : /Users/harshath/Downloads/main_pfz_prj/backend/uploads
+   Frontend dir   : /Users/harshath/Downloads/main_pfz_prj/frontend
+   Open browser   : http://localhost:5001
+Loading U-Net from /Users/harshath/Downloads/main_pfz_prj/backend/saved_models/best_unet.keras
+✅ U-Net loaded
+Loading ConvLSTM from /Users/harshath/Downloads/main_pfz_prj/backend/saved_models/convlstm_final.keras
+✅ ConvLSTM loaded
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.0.101:5001
+[33mPress CTRL+C to quit[0m
