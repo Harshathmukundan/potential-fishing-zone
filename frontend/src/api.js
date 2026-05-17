@@ -1,6 +1,6 @@
 // api.js — Backend API calls with retry + timeout + error handling
 // Uses relative URLs since frontend is served from the same Flask server
-const API_BASE = '/api';
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5001/api' : 'https://potential-fishing-zone.onrender.com/api';
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 120000) {
   const controller = new AbortController();
